@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Learning: AI Risk Awareness & Keamanan Data</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #3498db; color: #fff; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-size: 16px; margin-right: 10px; margin-top: 10px;}
+        button:hover { background: #2980b9; }
+        .btn-profile { background: #2ecc71; }
+        .btn-profile:hover { background: #27ae60; }
+        #result-section { margin-top: 30px; display: none; padding: 20px; border: 1px solid #e74c3c; border-radius: 8px; background: #fadbd8; }
+        .recommendation-card { background: #fff; padding: 15px; margin-top: 10px; border-left: 5px solid #e74c3c; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .recommendation-title { font-weight: bold; color: #c0392b; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-weight: bold; color: white; }
+        .risk-low { background-color: #2ecc71; }
+        .risk-medium { background-color: #f1c40f; color: #333; }
+        .risk-high { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Asesmen Risiko Privasi Data</h1>
+    <p>Ukur kebiasaan digital Anda dan dapatkan rekomendasi pembelajaran berbasis AI.</p>
+
+    <!-- Tombol Uji 3 Profil -->
+    <div style="margin-bottom: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;">
+        <strong>Simulasi Uji Profil:</strong><br>
+        <button class="btn-profile" onclick="setProfile(0)">Profil 1 (Aman)</button>
+        <button class="btn-profile" onclick="setProfile(1)">Profil 2 (Waspada)</button>
+        <button class="btn-profile" onclick="setProfile(2)">Profil 3 (Berbahaya)</button>
+    </div>
+
+    <!-- Formulir Kuesioner -->
+    <form id="assessment-form">
+        <div class="form-group">
+            <label>1. Bagaimana kebiasaan Anda mengelola Password?</label>
+            <select id="q-password">
+                <option value="0">Menggunakan Password Manager & password berbeda tiap akun</option>
+                <option value="15">Sering menggunakan password yang sama untuk 2-3 akun</option>
+                <option value="30">Satu password untuk semua akun penting dan media sosial</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>2. Apakah Anda pernah memberikan kode OTP kepada orang lain?</label>
+            <select id="q-otp">
+                <option value="0">Tidak pernah sama sekali</option>
+                <option value="15">Pernah, kepada keluarga/teman terdekat</option>
+                <option value="30">Pernah, kepada pihak yang mengaku dari instansi/bank</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>3. Seberapa sering Anda membagikan data pribadi (lokasi, tiket, KTP) di media sosial?</label>
+            <select id="q-sharing">
+                <option value="0">Tidak pernah/Sangat ketat</option>
+                <option value="10">Kadang-kadang, hanya di circle terbatas (close friends)</option>
+                <option value="20">Sering, akun saya publik</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>4. Apakah Anda mengaktifkan Autentikasi Dua Faktor (2FA)?</label>
+            <select id="q-2fa">
+                <option value="0">Ya, di semua akun penting (Email, Bank, Sosmed)</option>
+                <option value="10">Hanya di aplikasi perbankan/keuangan</option>
+                <option value="20">Tidak sama sekali, terlalu ribet</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>5. Penggunaan koneksi Wi-Fi Publik untuk transaksi penting:</label>
+            <select id="q-wifi">
+                <option value="0">Tidak pernah, selalu pakai seluler atau VPN</option>
+                <option value="5">Kadang-kadang jika terdesak</option>
+                <option value="10">Sering, karena hemat kuota</option>
+            </select>
+        </div>
+        <button type="button" onclick="calculateRisk()">Analisis Risiko (AI Scoring)</button>
+    </form>
+
+    <!-- Hasil AI -->
+    <div id="result-section">
+        <h2>Hasil Analisis AI Privacy Risk</h2>
+        <h3 id="score-display">Skor Risiko: <span id="score-value"></span>/100</h3>
+        <p>Tingkat Risiko: <span id="risk-badge" class="badge"></span></p>
+        
+        <h3>Prioritas Perbaikan (Recommendation & Explainability):</h3>
+        <div id="recommendations-container"></div>
+    </div>
+</div>
+
+<script>
+    // Rules / Knowledge Base untuk Rekomendasi
+    const rules = {
+        "password": {
+            condition: (val) => val > 0,
+            weight: (val) => val, 
+            title: "Modul 1: Manajemen Kata Sandi",
+            action: "Segera gunakan Password Manager dan ganti password yang sama.",
+            reason: "Penggunaan password yang sama memudahkan peretas membobol semua akun Anda jika satu platform bocor (Credential Stuffing).",
+            impact: "SIMULASI DAMPAK: Jika dibiarkan, akun email dan perbankan Anda dapat diambil alih secara bersamaan dalam waktu kurang dari 5 menit setelah kebocoran data."
+        },
+        "otp": {
+            condition: (val) => val > 0,
+            weight: (val) => val * 1.5, // OTP sangat kritikal
+            title: "Modul 2: Keamanan OTP & Social Engineering",
+            action: "Jangan pernah berikan OTP. Pihak resmi tidak pernah meminta OTP.",
+            reason: "OTP adalah benteng terakhir pertahanan akun. Memberikannya sama dengan menyerahkan kunci rumah Anda.",
+            impact: "SIMULASI DAMPAK: Saldo bank dapat terkuras atau akun WhatsApp Anda dapat dibajak untuk menipu orang terdekat."
+        },
+        "sharing": {
+            condition: (val) => val > 0,
+            weight: (val) => val,
+            title: "Modul 3: Kesadaran Jejak Digital",
+            action: "Hapus postingan yang memuat data sensitif (KTP, Boarding Pass) dan privat akun Anda.",
+            reason: "Data yang dibagikan dapat dikumpulkan (OSINT) untuk menebak pertanyaan keamanan atau memalsukan identitas Anda.",
+            impact: "SIMULASI DAMPAK: Data Anda dapat digunakan untuk pinjaman online ilegal (Pinjol) atas nama Anda."
+        },
+        "2fa": {
+            condition: (val) => val > 0,
+            weight: (val) => val * 1.2,
+            title: "Modul 4: Implementasi 2FA",
+            action: "Aktifkan 2FA (Autentikator App/SMS) di Email dan Media Sosial sekarang.",
+            reason: "Tanpa 2FA, peretas yang mengetahui password Anda bisa langsung masuk tanpa hambatan.",
+            impact: "SIMULASI DAMPAK: Jika password bocor, Anda akan kehilangan akses akun secara permanen sebelum Anda sempat menggantinya."
+        },
+        "wifi": {
+            condition: (val) => val > 0,
+            weight: (val) => val,
+            title: "Modul 5: Keamanan Jaringan",
+            action: "Gunakan VPN saat memakai Wi-Fi publik atau gunakan koneksi seluler untuk transaksi.",
+            reason: "Wi-Fi publik mudah disadap menggunakan teknik Man-in-the-Middle (MitM).",
+            impact: "SIMULASI DAMPAK: Kredensial login aplikasi perbankan yang diketik saat terkoneksi Wi-Fi publik dapat dicuri secara real-time."
+        }
+    };
+
+    function calculateRisk() {
+        const inputs = {
+            "password": parseInt(document.getElementById('q-password').value),
+            "otp": parseInt(document.getElementById('q-otp').value),
+            "sharing": parseInt(document.getElementById('q-sharing').value),
+            "2fa": parseInt(document.getElementById('q-2fa').value),
+            "wifi": parseInt(document.getElementById('q-wifi').value)
+        };
+
+        let totalScore = 0;
+        let generatedRecommendations = [];
+
+        // Evaluasi Rules
+        for (const [key, value] of Object.entries(inputs)) {
+            totalScore += value;
+            if (rules[key].condition(value)) {
+                generatedRecommendations.push({
+                    priorityScore: rules[key].weight(value),
+                    data: rules[key]
+                });
+            }
+        }
+
+        // Jika skor 0, berikan rekomendasi positif agar minimal ada 5 struktur
+        if(totalScore === 0) {
+            generatedRecommendations = [
+                { priorityScore: 1, data: { title: "Modul Lanjutan: Zero Trust", action: "Pelajari konsep keamanan tingkat lanjut.", reason: "Anda sudah memiliki dasar yang sangat baik.", impact: "Aman dari ancaman umum." }},
+                { priorityScore: 1, data: { title: "Modul: Backup Data", action: "Atur pencadangan data rutin.", reason: "Mencegah kehilangan data akibat ransomware.", impact: "Data dapat dipulihkan kapan saja." }}
+            ];
+        } else {
+            // Sortir rekomendasi berdasarkan bobot risiko (Prioritization)
+            generatedRecommendations.sort((a, b) => b.priorityScore - a.priorityScore);
+        }
+
+        displayResults(totalScore, generatedRecommendations);
+    }
+
+    function displayResults(score, recommendations) {
+        const resultSection = document.getElementById('result-section');
+        const scoreValue = document.getElementById('score-value');
+        const badge = document.getElementById('risk-badge');
+        const recContainer = document.getElementById('recommendations-container');
+
+        resultSection.style.display = 'block';
+        scoreValue.innerText = score;
+
+        // Styling Risk Level
+        if (score <= 20) {
+            badge.innerText = "RENDAH (Aman)"; badge.className = "badge risk-low";
+            resultSection.style.borderColor = "#2ecc71"; resultSection.style.backgroundColor = "#e8f8f5";
+        } else if (score <= 50) {
+            badge.innerText = "MENENGAH (Waspada)"; badge.className = "badge risk-medium";
+            resultSection.style.borderColor = "#f1c40f"; resultSection.style.backgroundColor = "#fef9e7";
+        } else {
+            badge.innerText = "TINGGI (Berbahaya)"; badge.className = "badge risk-high";
+            resultSection.style.borderColor = "#e74c3c"; resultSection.style.backgroundColor = "#fadbd8";
+        }
+
+        // Render Recommendations
+        recContainer.innerHTML = "";
+        recommendations.slice(0, 5).forEach((rec, index) => { // Limit max 5
+            recContainer.innerHTML += `
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Prioritas #${index + 1}: ${rec.data.title}</div>
+                    <p><strong>Tindakan:</strong> ${rec.data.action}</p>
+                    <p><strong>Alasan:</strong> ${rec.data.reason}</p>
+                    <p style="color: #c0392b;"><strong>${rec.data.impact}</strong></p>
+                </div>
+            `;
+        });
+    }
+
+    // Fungsi untuk menguji 3 Metrik Profil Minimum
+    function setProfile(type) {
+        const profiles = [
+            // Profil 1: Aman (Skor Rendah)
+            [0, 0, 0, 0, 0],
+            // Profil 2: Waspada (Skor Menengah)
+            [15, 0, 10, 10, 5],
+            // Profil 3: Berbahaya (Skor Tinggi)
+            [30, 30, 20, 20, 10]
+        ];
+
+        const selects = ['q-password', 'q-otp', 'q-sharing', 'q-2fa', 'q-wifi'];
+        
+        selects.forEach((id, index) => {
+            document.getElementById(id).value = profiles[type][index];
+        });
+
+        calculateRisk();
+    }
+</script>
+
+</body>
+</html>
